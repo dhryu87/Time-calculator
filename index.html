@@ -235,6 +235,10 @@
     tbody tr:hover td {
       background: color-mix(in srgb, var(--accent) 5%, var(--surface)) !important;
     }
+    .row-disabled td {
+      opacity: 0.62;
+      background: color-mix(in srgb, var(--muted) 8%, var(--surface)) !important;
+    }
     .week-divider td {
       background: linear-gradient(90deg, var(--accent-soft), transparent) !important;
       font-weight: 700;
@@ -437,7 +441,9 @@
       none: 0,
       half: 4 * 3600,
       quarter: 2 * 3600,
-      full: 8 * 3600
+      full: 8 * 3600,
+      outingHalf: 4 * 3600,
+      outingFull: 8 * 3600
     };
 
     const rowsEl = document.getElementById("rows");
@@ -535,6 +541,8 @@
               <option value="quarter">반반차(2h)</option>
               <option value="half">반차(4h)</option>
               <option value="full">연차(8h)</option>
+              <option value="outingHalf">공용외출(4h)</option>
+              <option value="outingFull">공용외출(8h)</option>
             </select>
           </td>
           <td class="net">-</td>
@@ -547,17 +555,33 @@
       rowsEl.appendChild(fragment);
     }
 
+    function applyRowDisabledState(tr) {
+      const isHoliday = tr.querySelector(".holiday").checked;
+      const startEl = tr.querySelector(".start");
+      const endEl = tr.querySelector(".end");
+      const breakEl = tr.querySelector(".break");
+      const leaveEl = tr.querySelector(".leave");
+
+      startEl.disabled = isHoliday;
+      endEl.disabled = isHoliday;
+      breakEl.disabled = isHoliday;
+      leaveEl.disabled = isHoliday;
+
+      tr.classList.toggle("row-disabled", isHoliday);
+    }
+
     function setRowsFromData(data) {
       const trs = Array.from(rowsEl.querySelectorAll("tr")).filter((tr) => tr.dataset.day);
       trs.forEach((tr, idx) => {
         const row = data[idx] || ["", "", 0];
         const [s, e, b] = row;
         const isHoliday = !s && !e;
+        tr.querySelector(".holiday").checked = isHoliday;
         tr.querySelector(".start").value = s;
         tr.querySelector(".end").value = e;
         tr.querySelector(".break").value = String(Number.isFinite(b) ? b : 0);
-        tr.querySelector(".holiday").checked = isHoliday;
         tr.querySelector(".leave").value = "none";
+        applyRowDisabledState(tr);
       });
     }
 
@@ -595,13 +619,16 @@
       const holiday = tr.querySelector(".holiday").checked;
       const leave = tr.querySelector(".leave").value;
       const leaveSec = LEAVE_SECONDS[leave] || 0;
+      const isFullLeave = leave === "full" || leave === "outingFull";
+      const isDayOff = holiday || isFullLeave;
+      const leaveCreditSec = isFullLeave ? 0 : leaveSec;
 
       const startSec = toSec(startStr);
       let endSec = toSec(endStr);
 
       let netSec = 0;
       let breakSec = 0;
-      if (!holiday && startSec !== null && endSec !== null) {
+      if (!isDayOff && startSec !== null && endSec !== null) {
         if (endSec < startSec) endSec += 86400;
         const elapsedSec = Math.max(0, endSec - startSec);
         const manualSec = manualBreakSec(breakMin);
@@ -610,15 +637,15 @@
         netSec = Math.max(0, elapsedSec - breakSec);
       }
 
-      const totalSec = holiday ? 0 : netSec + leaveSec;
-      const hasWorkTimes = !holiday && startSec !== null && endSec !== null;
+      const totalSec = isDayOff ? 0 : netSec + leaveCreditSec;
+      const hasWorkTimes = !isDayOff && startSec !== null && endSec !== null;
       const excessSec = hasWorkTimes ? computeExcessSec(netSec) : null;
       let sweetLeave = "-";
-      if (!holiday && startSec !== null) {
+      if (!isDayOff && startSec !== null) {
         sweetLeave = secToTimeOfDay(startSec + SWEET_WORK_SEC);
       }
 
-      const minRuleApplies = !holiday && leaveSec === 0 && (startSec !== null || endSec !== null);
+      const minRuleApplies = !isDayOff && leaveCreditSec === 0 && (startSec !== null || endSec !== null);
       const minSatisfied = minRuleApplies ? netSec >= DAILY_MIN_SEC : true;
 
       return {
@@ -631,6 +658,7 @@
         netSec,
         totalSec,
         excessSec,
+        isDayOff,
         sweetLeave,
         minRuleApplies,
         minSatisfied
@@ -639,7 +667,7 @@
 
     function findLastWorkdayIndex(dayData, from, to) {
       for (let i = to; i >= from; i -= 1) {
-        if (dayData[i].startSec !== null && !dayData[i].holiday) return i;
+        if (dayData[i].startSec !== null && !dayData[i].isDayOff) return i;
       }
       return null;
     }
@@ -663,6 +691,8 @@
     function render() {
       const trs = Array.from(rowsEl.querySelectorAll("tr")).filter((tr) => tr.dataset.day);
       const dayData = trs.map(getRowData);
+      const week1WeekdayIdx = [0, 1, 2, 3, 4];
+      const week2WeekdayIdx = [7, 8, 9, 10, 11];
 
       dayData.forEach((d) => {
         d.tr.querySelector(".net").textContent = secToHMS(d.netSec);
@@ -689,38 +719,74 @@
         }
       });
 
-      const week1 = dayData.slice(0, 7);
-      const week2 = dayData.slice(7, 14);
+      const week1 = week1WeekdayIdx.map((i) => dayData[i]);
+      const week2 = week2WeekdayIdx.map((i) => dayData[i]);
 
-      const week1TotalSec = week1.reduce((acc, d) => acc + d.totalSec, 0);
-      const week2TotalSec = week2.reduce((acc, d) => acc + d.totalSec, 0);
+      const week1TotalSec = week1.reduce((acc, d) => acc + (d?.totalSec ?? 0), 0);
+      const week2TotalSec = week2.reduce((acc, d) => acc + (d?.totalSec ?? 0), 0);
       const biTotalSec = week1TotalSec + week2TotalSec;
       const overtimeTotalSec = dayData.reduce((acc, d) => acc + (d.excessSec ?? 0), 0);
 
+      const week1HolidayCount = week1WeekdayIdx.reduce(
+        (acc, idx) => {
+          const row = trs[idx];
+          if (!row) return acc;
+          const isCheckedHoliday = row.querySelector(".holiday").checked;
+          const leaveType = row.querySelector(".leave").value;
+          const isFullLeave = leaveType === "full" || leaveType === "outingFull";
+          return acc + (isCheckedHoliday || isFullLeave ? 1 : 0);
+        },
+        0
+      );
+      const week2HolidayCount = week2WeekdayIdx.reduce(
+        (acc, idx) => {
+          const row = trs[idx];
+          if (!row) return acc;
+          const isCheckedHoliday = row.querySelector(".holiday").checked;
+          const leaveType = row.querySelector(".leave").value;
+          const isFullLeave = leaveType === "full" || leaveType === "outingFull";
+          return acc + (isCheckedHoliday || isFullLeave ? 1 : 0);
+        },
+        0
+      );
+      const totalHolidayCount = week1HolidayCount + week2HolidayCount;
+
+      const week1TargetSec = Math.max(0, WEEK_TARGET_SEC - week1HolidayCount * 8 * 3600);
+      const week2TargetSec = Math.max(0, WEEK_TARGET_SEC - week2HolidayCount * 8 * 3600);
+      const biweekTargetSec = Math.max(0, BIWEEK_TARGET_SEC - totalHolidayCount * 8 * 3600);
+
       document.getElementById("week1Total").textContent =
-        `${secToHMS(week1TotalSec)} / 40:00:00 (${secToHMS(week1TotalSec - WEEK_TARGET_SEC)})`;
+        `${secToHMS(week1TotalSec)} / ${secToHMS(week1TargetSec)} (${secToHMS(week1TotalSec - week1TargetSec)})`;
       document.getElementById("week2Total").textContent =
-        `${secToHMS(week2TotalSec)} / 40:00:00 (${secToHMS(week2TotalSec - WEEK_TARGET_SEC)})`;
+        `${secToHMS(week2TotalSec)} / ${secToHMS(week2TargetSec)} (${secToHMS(week2TotalSec - week2TargetSec)})`;
       document.getElementById("biweeklyTotal").textContent =
-        `${secToHMS(biTotalSec)} / 80:00:00 (${secToHMS(biTotalSec - BIWEEK_TARGET_SEC)})`;
+        `${secToHMS(biTotalSec)} / ${secToHMS(biweekTargetSec)} (${secToHMS(biTotalSec - biweekTargetSec)})`;
       const otTotalEl = document.getElementById("overtimeTotal");
       otTotalEl.textContent = formatExcess(overtimeTotalSec);
       otTotalEl.className =
         "value" +
         (overtimeTotalSec < 0 ? " ot-short" : overtimeTotalSec > 0 ? " ot-plus" : "");
 
-      const week1LastIdx = findLastWorkdayIndex(dayData, 0, 6);
-      const week2LastIdx = findLastWorkdayIndex(dayData, 7, 13);
+      const week1LastIdx = findLastWorkdayIndex(dayData, 0, 4);
+      const week2LastIdx = findLastWorkdayIndex(dayData, 7, 11);
 
       document.getElementById("week1LastLeave").textContent =
-        computeTargetLeaveTime(dayData, week1LastIdx, WEEK_TARGET_SEC, 0, 6);
+        computeTargetLeaveTime(dayData, week1LastIdx, week1TargetSec, 0, 4);
       document.getElementById("week2LastLeave").textContent =
-        computeTargetLeaveTime(dayData, week2LastIdx, BIWEEK_TARGET_SEC, 0, 13);
+        computeTargetLeaveTime(dayData, week2LastIdx, biweekTargetSec, 0, 11);
     }
 
     function bindEvents() {
       rowsEl.addEventListener("input", render);
       rowsEl.addEventListener("change", render);
+      rowsEl.addEventListener("change", (e) => {
+        if (!(e.target instanceof HTMLElement)) return;
+        if (!e.target.classList.contains("holiday")) return;
+        const tr = e.target.closest("tr");
+        if (!tr || !tr.dataset.day) return;
+        applyRowDisabledState(tr);
+        render();
+      });
 
       document.getElementById("btnCalc").addEventListener("click", render);
       document.getElementById("btnClear").addEventListener("click", () => {
@@ -731,6 +797,7 @@
           tr.querySelector(".break").value = "0";
           tr.querySelector(".holiday").checked = false;
           tr.querySelector(".leave").value = "none";
+          applyRowDisabledState(tr);
         });
         render();
       });
