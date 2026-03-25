@@ -6,10 +6,137 @@
   <title>근무 시간 계산기</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="public/favicon.svg" />
   <style>
     :root {
-      color-scheme: light dark;
+      color-scheme: dark;
+      /* Stitch: original-layout-refined-dashboard 기반 다크 팔레트 */
+      --bg: #0b1326;
+      --surface: #131b2e;
+      --surface-2: #222a3d;
+      --fg: #dae2fd;
+      --muted: #a9bad3;
+      --line: #444654;
+      --accent: #b8c3ff;
+      --accent-soft: color-mix(in srgb, #b8c3ff 16%, transparent);
+      --accent-hover: #dde1ff;
+      --shadow: 0 1px 3px rgb(0 0 0 / 35%), 0 12px 32px rgb(0 0 0 / 28%);
+      --shadow-lg: 0 10px 30px rgb(0 0 0 / 45%);
+      --radius: 14px;
+      --radius-sm: 10px;
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --danger: #ba1a1a;
+      --danger-soft: rgba(127, 29, 29, 0.35);
+      --info: #b8c3ff;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Inter", "Noto Sans KR", "DM Sans", system-ui, sans-serif;
+      font-size: 15px;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    .page-bg {
+      background: var(--bg);
+    }
+    .wrap {
+      max-width: 1024px;
+      margin: 0 auto;
+      padding: 48px 16px 96px;
+    }
+    .hero {
+      margin-bottom: 28px;
+    }
+    .dash-header {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    @media (min-width: 900px) {
+      .dash-header {
+        flex-direction: row;
+        align-items: flex-end;
+        justify-content: space-between;
+      }
+    }
+    .dash-title {
+      font-family: "Space Grotesk", "Noto Sans KR", system-ui, sans-serif;
+      font-size: clamp(1.7rem, 3.6vw, 2.2rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin: 0;
+    }
+    .dash-subtitle {
+      margin: 8px 0 0;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+      color: var(--muted);
+      opacity: 0.8;
+    }
+    .target-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+      background: color-mix(in srgb, var(--surface-2) 65%, transparent);
+    }
+    .target-chip .label {
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .target-chip .hours {
+      font-size: 1rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--fg);
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+    }
+    .settings-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface-2) 75%, transparent);
+      color: var(--fg);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+    }
+    .settings-btn:hover {
+      border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+      background: var(--surface-2);
+    }
+    .settings-btn:active { transform: scale(0.98); }
+    .hero-card {
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      padding: 28px 32px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+    }
+
+    :root[data-theme="light"] {
+      color-scheme: light;
       --bg: #f4f6fb;
       --surface: #ffffff;
       --surface-2: #f8fafc;
@@ -21,62 +148,98 @@
       --accent-hover: #2f49b8;
       --shadow: 0 1px 3px rgb(15 23 42 / 6%), 0 8px 24px rgb(15 23 42 / 6%);
       --shadow-lg: 0 4px 6px rgb(15 23 42 / 5%), 0 20px 50px rgb(59 91 219 / 10%);
-      --radius: 14px;
-      --radius-sm: 10px;
       --ok: #059669;
       --warn: #d97706;
       --danger: #dc2626;
       --danger-soft: #fef2f2;
       --info: #2563eb;
     }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0c0f18;
-        --surface: #141a24;
-        --surface-2: #1a2230;
-        --fg: #f1f5f9;
-        --muted: #94a3b8;
-        --line: #2d3a4f;
-        --accent: #7c9cff;
-        --accent-soft: color-mix(in srgb, #7c9cff 14%, transparent);
-        --accent-hover: #9bb4ff;
-        --shadow: 0 1px 3px rgb(0 0 0 / 35%), 0 12px 32px rgb(0 0 0 / 28%);
-        --shadow-lg: 0 8px 40px rgb(0 0 0 / 45%);
-        --danger-soft: #2a1518;
-        --ok: #34d399;
-        --warn: #fbbf24;
-      }
-    }
-    *, *::before, *::after { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "Noto Sans KR", "DM Sans", system-ui, sans-serif;
-      font-size: 15px;
-      background: var(--bg);
-      color: var(--fg);
-      line-height: 1.55;
-      min-height: 100vh;
-    }
-    .page-bg {
+
+    :root[data-theme="light"] .page-bg {
       background:
         radial-gradient(1200px 600px at 80% -10%, var(--accent-soft), transparent 55%),
         radial-gradient(900px 500px at -5% 30%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 50%),
         var(--bg);
     }
-    .wrap {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 28px 20px 56px;
+
+    /* Theme modal */
+    .theme-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
-    .hero {
-      margin-bottom: 28px;
-    }
-    .hero-card {
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: 28px 32px;
+    .theme-modal-overlay.open { display: flex; }
+    .theme-modal {
+      width: 100%;
+      max-width: 420px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
       box-shadow: var(--shadow-lg);
-      border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+      padding: 16px;
+      color: var(--fg);
+    }
+    .theme-modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .theme-modal-title {
+      font-weight: 900;
+      font-size: 1rem;
+      letter-spacing: -0.01em;
+    }
+    .theme-modal-close {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      color: var(--fg);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .theme-options {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .theme-option {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      color: var(--fg);
+      cursor: pointer;
+      font-weight: 800;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: transform 0.08s ease, border-color 0.12s ease, background 0.12s ease;
+    }
+    .theme-option:hover {
+      border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+      background: var(--surface);
+    }
+    .theme-option:active { transform: scale(0.99); }
+    .theme-option small {
+      font-weight: 800;
+      color: var(--muted);
     }
     .hero-badge {
       display: inline-block;
@@ -105,7 +268,7 @@
     }
     .panel {
       background: var(--surface);
-      border-radius: var(--radius);
+      border-radius: var(--radius-sm);
       border: 1px solid var(--line);
       box-shadow: var(--shadow);
       padding: 18px 20px;
@@ -119,6 +282,8 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
     .panel-head::before {
       content: "";
@@ -315,6 +480,16 @@
       padding: 10px 14px;
       letter-spacing: 0.02em;
     }
+    td.daycell {
+      text-align: center;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.86rem;
+      font-weight: 900;
+      color: var(--accent);
+      padding-left: 0;
+      padding-right: 0;
+      background: color-mix(in srgb, var(--surface-2) 55%, transparent);
+    }
     input[type="time"], input[type="number"], select {
       width: 100%;
       min-width: 0;
@@ -348,6 +523,35 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 14px;
+    }
+    .widgets {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+    }
+    .widgets .card {
+      padding: 18px 18px;
+      box-shadow: none;
+      transition: none;
+    }
+    .widgets .card:hover {
+      transform: none;
+      box-shadow: none;
+      border-color: var(--line);
+    }
+    .widget-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .widget-icon {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      opacity: 0.65;
+      color: var(--accent);
+      font-size: 1.05rem;
     }
     .card {
       background: var(--surface);
@@ -405,16 +609,45 @@
 <body>
   <div class="page-bg">
   <div class="wrap">
-    <header class="hero">
-      <div class="hero-card">
-        <p class="hero-badge">2주 · 80시간</p>
-        <h1>근무시간 계산기</h1>
-        <p class="desc">
-          출근·퇴근·휴게를 입력하면 일일 근무·초과·법정 목표 시각(4h / 꿀 / 8h / 잔업)과 주 40시간·2주 80시간 현황을 보여 줍니다.
-          휴가는 <strong>연차 8시간</strong>, <strong>반차 4시간</strong>, <strong>반반차 2시간</strong>으로 반영됩니다.
-        </p>
+    <header class="dash-header">
+      <div>
+        <h1 class="dash-title">근무시간 계산기</h1>
+        <p class="dash-subtitle">Nocturnal Precisionist Edition</p>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; justify-content:flex-end;">
+        <div class="target-chip" aria-label="Target 80 hours">
+          <span class="label">TARGET</span>
+          <span class="hours">80.00 HRS</span>
+        </div>
+        <button type="button" class="settings-btn" id="btnThemeSettings" aria-label="Settings">
+          <span class="material-symbols-outlined">settings</span>
+        </button>
       </div>
     </header>
+
+    <section class="widgets">
+      <div class="card">
+        <div class="widget-top">
+          <div class="title" style="margin-bottom: 0;">Total Calculated</div>
+          <span class="material-symbols-outlined widget-icon">schedule</span>
+        </div>
+        <div class="value" id="widgetTotalCalculated">-</div>
+      </div>
+      <div class="card">
+        <div class="widget-top">
+          <div class="title" style="margin-bottom: 0;">Remaining to 80</div>
+          <span class="material-symbols-outlined widget-icon">hourglass_empty</span>
+        </div>
+        <div class="value" id="widgetRemainingTo80">-</div>
+      </div>
+      <div class="card">
+        <div class="widget-top">
+          <div class="title" style="margin-bottom: 0;">Daily Average</div>
+          <span class="material-symbols-outlined widget-icon">equalizer</span>
+        </div>
+        <div class="value" id="widgetDailyAverage">-</div>
+      </div>
+    </section>
 
     <section class="panel">
       <div class="panel-head">빠른 작업</div>
@@ -509,6 +742,32 @@
       - 휴일 체크 시 해당 일차는 0시간으로 처리됩니다.<br />
       - 최소 4시간 규칙은 휴일이 아니고 휴가를 사용하지 않은 날에만 체크합니다.
     </footer>
+
+    <div class="theme-modal-overlay" id="themeModalOverlay" role="dialog" aria-modal="true" aria-labelledby="themeModalTitle">
+      <div class="theme-modal">
+        <div class="theme-modal-head">
+          <div>
+            <div class="theme-modal-title" id="themeModalTitle">테마 설정</div>
+            <div style="margin-top: 6px; color: var(--muted); font-weight: 800; font-size: 0.84rem;">
+              현재 테마 또는 화이트 테마로 전환할 수 있습니다.
+            </div>
+          </div>
+          <button type="button" class="theme-modal-close" id="btnThemeModalClose" aria-label="Close">
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
+          </button>
+        </div>
+        <div class="theme-options">
+          <button type="button" class="theme-option" data-theme="dark">
+            <span>현재 테마(다크)</span>
+            <small>Default</small>
+          </button>
+          <button type="button" class="theme-option" data-theme="light">
+            <span>화이트 테마(라이트)</span>
+            <small>Light</small>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
   </div>
 
@@ -529,6 +788,42 @@
     };
 
     const rowsEl = document.getElementById("rows");
+
+    const THEME_KEY = "theme";
+
+    function applyTheme(theme) {
+      const t = theme === "light" ? "light" : "dark";
+      document.documentElement.dataset.theme = t;
+      try {
+        localStorage.setItem(THEME_KEY, t);
+      } catch {
+        // ignore
+      }
+    }
+
+    function initTheme() {
+      let t = "dark";
+      try {
+        t = localStorage.getItem(THEME_KEY) || "dark";
+      } catch {
+        // ignore
+      }
+      applyTheme(t);
+    }
+
+    function openThemeModal() {
+      const overlay = document.getElementById("themeModalOverlay");
+      if (!overlay) return;
+      overlay.classList.add("open");
+    }
+
+    function closeThemeModal() {
+      const overlay = document.getElementById("themeModalOverlay");
+      if (!overlay) return;
+      overlay.classList.remove("open");
+    }
+
+    initTheme();
 
     function toSec(hms) {
       if (!hms) return null;
@@ -612,7 +907,7 @@
         const tr = document.createElement("tr");
         tr.dataset.day = String(i);
         tr.innerHTML = `
-          <td>D${i}</td>
+          <td class="daycell">D${i}</td>
           <td><input type="time" step="1" class="start" /></td>
           <td><input type="time" step="1" class="end" /></td>
           <td><input type="number" class="break" min="0" max="600" value="0" /></td>
@@ -837,6 +1132,22 @@
       const week2TargetSec = Math.max(0, WEEK_TARGET_SEC - week2HolidayCount * 8 * 3600);
       const biweekTargetSec = Math.max(0, BIWEEK_TARGET_SEC - totalHolidayCount * 8 * 3600);
 
+      // Stitch 위젯 스타일 카드 값:
+      // - Total Calculated: 2주 누적 총 시간(실근무+휴가 반영)
+      // - Remaining to 80: 2주 목표(80h) 대비 남은 시간
+      // - Daily Average: 입력된(시작시간 존재 + 휴일/휴가 제외) 일수 기준 평균
+      const widgetTotalCalculatedEl = document.getElementById("widgetTotalCalculated");
+      const widgetRemainingTo80El = document.getElementById("widgetRemainingTo80");
+      const widgetDailyAverageEl = document.getElementById("widgetDailyAverage");
+      if (widgetTotalCalculatedEl && widgetRemainingTo80El && widgetDailyAverageEl) {
+        const loggedDays = dayData.filter((d) => !d.isDayOff && d.startSec !== null).length;
+        const remainingSec = Math.max(0, BIWEEK_TARGET_SEC - biTotalSec);
+        const avgSec = loggedDays > 0 ? Math.floor(biTotalSec / loggedDays) : 0;
+        widgetTotalCalculatedEl.textContent = secToHMS(biTotalSec);
+        widgetRemainingTo80El.textContent = secToHMS(remainingSec);
+        widgetDailyAverageEl.textContent = secToHMS(avgSec);
+      }
+
       document.getElementById("week1Total").textContent =
         `${secToHMS(week1TotalSec)} / ${secToHMS(week1TargetSec)} (${secToHMS(week1TotalSec - week1TargetSec)})`;
       document.getElementById("week2Total").textContent =
@@ -886,6 +1197,36 @@
       });
 
       document.getElementById("btnCalc").addEventListener("click", render);
+      const btnThemeSettings = document.getElementById("btnThemeSettings");
+      if (btnThemeSettings) {
+        btnThemeSettings.addEventListener("click", openThemeModal);
+      }
+
+      const btnThemeModalClose = document.getElementById("btnThemeModalClose");
+      if (btnThemeModalClose) {
+        btnThemeModalClose.addEventListener("click", closeThemeModal);
+      }
+
+      const overlay = document.getElementById("themeModalOverlay");
+      if (overlay) {
+        overlay.addEventListener("click", (e) => {
+          if (e.target === overlay) closeThemeModal();
+        });
+      }
+
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeThemeModal();
+      });
+
+      const themeOptions = Array.from(document.querySelectorAll(".theme-option"));
+      themeOptions.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const theme = btn.getAttribute("data-theme") || "dark";
+          applyTheme(theme);
+          closeThemeModal();
+        });
+      });
+
       document.getElementById("btnClear").addEventListener("click", () => {
         const trs = Array.from(rowsEl.querySelectorAll("tr")).filter((tr) => tr.dataset.day);
         trs.forEach((tr) => {
