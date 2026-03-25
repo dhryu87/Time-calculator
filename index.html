@@ -205,8 +205,29 @@
       font-weight: 600;
       color: var(--fg);
     }
+    .paste-guide-media {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
     .paste-guide figure {
-      margin: 0 0 12px;
+      margin: 0;
+      flex: 1 1 260px;
+      min-width: 0;
+    }
+    .paste-guide-context {
+      flex: 1 1 200px;
+      min-width: min(100%, 220px);
+      margin: 0;
+      padding: 12px 14px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.65;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: var(--surface);
     }
     .paste-guide img {
       max-width: 100%;
@@ -408,10 +429,13 @@
       <div class="panel-head">데이터 붙여넣기</div>
       <div class="paste-guide">
         <h3>출퇴근 데이터 복사 방법</h3>
-        <figure>
-          <img src="public/example.png" alt="월요일 행 기준, 오른쪽 두 번째 셀부터 0 또는 30이 들어 있는 셀까지 드래그 후 복사하는 예시" width="800" loading="lazy" />
-          <figcaption>월요일 행 기준, 오른쪽 2번째 셀부터 0/30이 들어 있는 셀까지 드래그 후 복사</figcaption>
-        </figure>
+        <div class="paste-guide-media">
+          <figure>
+            <img src="public/example.png" alt="월요일 행 기준, 오른쪽 두 번째 셀부터 0 또는 30이 들어 있는 셀까지 드래그 후 복사하는 예시" width="800" loading="lazy" />
+            <figcaption>월요일 행 기준, 오른쪽 2번째 셀부터 0/30이 들어 있는 셀까지 드래그 후 복사</figcaption>
+          </figure>
+          <p class="paste-guide-context">HR 시스템에서 <strong>근태</strong> → <strong>개인출퇴근현황(2주단위)</strong>를 클릭해 조회한 화면에 표시되는 데이터입니다.</p>
+        </div>
         <ol>
           <li>월요일 행 기준, <strong>오른쪽 2번째 셀부터 0/30이 들어 있는 셀까지</strong> 드래그 후 복사합니다.</li>
           <li>복사한 값을 <strong>데이터 붙여넣기</strong> 영역에 붙여넣고 <strong>붙여넣기 적용</strong> 버튼을 클릭합니다.</li>
